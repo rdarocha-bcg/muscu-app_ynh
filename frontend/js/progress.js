@@ -62,7 +62,8 @@ async function onExerciseChange() {
   history.replaceState(null, "", `?ex=${encodeURIComponent(exercise)}`);
 
   const res = await apiFetch(`${API}/api/progress/${encodeURIComponent(exercise)}`);
-  currentData = await res.json();
+  const rawData = await res.json();
+  currentData = rawData.data ?? rawData;
 
   document.getElementById("progress-content").classList.remove("hidden");
   renderStats(currentData);

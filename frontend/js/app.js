@@ -64,7 +64,8 @@ function onTagKeydown(inputId, getTags, selectedId, renderFn) {
 // Sessions list
 async function loadSessions() {
   const url = activeFilter ? `${API}/api/sessions?tag=${encodeURIComponent(activeFilter)}` : `${API}/api/sessions`;
-  const sessions = await apiFetch(url).then(r => r.json());
+  const data = await apiFetch(url).then(r => r.json());
+  const sessions = data.data ?? data;
   const el = document.getElementById("sessions-list");
 
   if (!sessions.length) {
@@ -156,7 +157,8 @@ async function deleteSession(id) {
 async function openEditModal(id) {
   closeModal();
   editSessionId = id;
-  const sessions = await apiFetch(`${API}/api/sessions`).then(r => r.json());
+  const data = await apiFetch(`${API}/api/sessions`).then(r => r.json());
+  const sessions = data.data ?? data;
   const s = sessions.find(x => x.id === id);
   if (!s) return;
   document.getElementById("edit-date").value = s.date;

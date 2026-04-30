@@ -31,6 +31,11 @@ def client(tmp_path):
 HEADERS = {"X-API-Key": "test-key"}
 
 
+@pytest.fixture()
+def auth_headers():
+    return HEADERS
+
+
 class TestAuth:
     def test_api_requires_key(self, client):
         r = client.get("/api/sessions")
@@ -54,7 +59,9 @@ class TestAuth:
 class TestSessions:
     def test_list_empty(self, client):
         r = client.get("/api/sessions", headers=HEADERS)
-        assert r.json() == []
+        body = r.json()
+        assert body["data"] == []
+        assert body["total"] == 0
 
     def test_create_and_list(self, client):
         r = client.post("/api/sessions", headers=HEADERS,
@@ -62,7 +69,7 @@ class TestSessions:
         assert r.status_code == 200
         session_id = r.json()["id"]
 
-        sessions = client.get("/api/sessions", headers=HEADERS).json()
+        sessions = client.get("/api/sessions", headers=HEADERS).json()["data"]
         assert len(sessions) == 1
         assert sessions[0]["id"] == session_id
         assert sessions[0]["date"] == "2024-01-15"
@@ -77,7 +84,7 @@ class TestSessions:
         client.post(f"/api/sessions/{sid}/logs", headers=HEADERS,
                     json={"exercise": "Bench", "sets": [{"reps": 5, "weight": 80}]})
 
-        sessions = client.get("/api/sessions", headers=HEADERS).json()
+        sessions = client.get("/api/sessions", headers=HEADERS).json()["data"]
         assert sessions[0]["exercise_count"] == 2
 
     def test_delete_session(self, client):
@@ -85,8 +92,8 @@ class TestSessions:
                         json={"date": "2024-01-15", "notes": "", "tags": []})
         sid = r.json()["id"]
         client.delete(f"/api/sessions/{sid}", headers=HEADERS)
-        sessions = client.get("/api/sessions", headers=HEADERS).json()
-        assert sessions == []
+        body = client.get("/api/sessions", headers=HEADERS).json()
+        assert body["data"] == []
 
     def test_tag_filter(self, client):
         client.post("/api/sessions", headers=HEADERS,
@@ -94,9 +101,29 @@ class TestSessions:
         client.post("/api/sessions", headers=HEADERS,
                     json={"date": "2024-01-16", "notes": "", "tags": ["pull"]})
 
-        push = client.get("/api/sessions?tag=push", headers=HEADERS).json()
+        push = client.get("/api/sessions?tag=push", headers=HEADERS).json()["data"]
         assert len(push) == 1
         assert "push" in push[0]["tags"]
+
+    def test_sessions_pagination(self, client, auth_headers):
+        for i in range(1, 4):
+            client.post("/api/sessions", headers=auth_headers,
+                        json={"date": f"2024-01-{i:02d}", "notes": "", "tags": []})
+
+        body = client.get("/api/sessions?limit=2", headers=auth_headers).json()
+        assert body["total"] == 3
+        assert len(body["data"]) == 2
+        assert body["limit"] == 2
+        assert body["offset"] == 0
+
+    def test_sessions_offset(self, client, auth_headers):
+        for i in range(1, 4):
+            client.post("/api/sessions", headers=auth_headers,
+                        json={"date": f"2024-01-{i:02d}", "notes": "", "tags": []})
+
+        body = client.get("/api/sessions?offset=2", headers=auth_headers).json()
+        assert body["total"] == 3
+        assert len(body["data"]) == 1
 
 
 class TestLogs:
@@ -130,7 +157,7 @@ class TestExercises:
     def test_exercises_list(self, client):
         client.post("/api/sessions", headers=HEADERS,
                     json={"date": "2024-01-15", "notes": "", "tags": []})
-        sessions = client.get("/api/sessions", headers=HEADERS).json()
+        sessions = client.get("/api/sessions", headers=HEADERS).json()["data"]
         sid = sessions[0]["id"]
         client.post(f"/api/sessions/{sid}/logs", headers=HEADERS,
                     json={"exercise": "OHP", "sets": [{"reps": 5, "weight": 50}]})

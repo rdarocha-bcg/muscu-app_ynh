@@ -4,7 +4,8 @@ current.setDate(1);
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initConfig();
-  allSessions = await apiFetch(`${API}/api/sessions`).then(r => r.json());
+  const sessionsData = await apiFetch(`${API}/api/sessions`).then(r => r.json());
+  allSessions = sessionsData.data ?? sessionsData;
   document.getElementById("btn-prev").onclick = () => { current.setMonth(current.getMonth() - 1); render(); };
   document.getElementById("btn-next").onclick = () => { current.setMonth(current.getMonth() + 1); render(); };
   document.getElementById("btn-today").onclick = () => { current = new Date(); current.setDate(1); render(); };
