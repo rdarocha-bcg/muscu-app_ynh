@@ -11,7 +11,6 @@ ynh_script_progression --message="Restoring $app files..." --weight=5
 ynh_restore_file --origin_path="$install_dir/backend/main.py"
 ynh_restore_file --origin_path="$install_dir/backend/requirements.txt"
 ynh_restore_file --origin_path="$install_dir/frontend"
-ynh_restore_file --origin_path="$install_dir/.env"
 
 #=================================================
 # RESTORE DATABASE

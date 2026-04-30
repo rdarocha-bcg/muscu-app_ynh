@@ -1,19 +1,9 @@
-const API = "";
-let API_KEY = "";
 let chart = null;
 let currentData = [];
 let currentTab = "weight";
 
-async function apiFetch(url, opts = {}) {
-  return fetch(url, {
-    ...opts,
-    headers: { "Content-Type": "application/json", "X-API-Key": API_KEY, ...(opts.headers || {}) }
-  });
-}
-
 document.addEventListener("DOMContentLoaded", async () => {
-  const cfg = await fetch(`${API}/config`).then(r => r.json()).catch(() => ({}));
-  API_KEY = cfg.api_key || "";
+  await initConfig();
   loadExercises();
   loadFrequent();
   document.getElementById("select-exercise").onchange = onExerciseChange;
@@ -32,7 +22,7 @@ async function loadFrequent() {
   const el = document.getElementById("frequent-exercises");
   if (!frequent.length) { el.innerHTML = ""; return; }
   el.innerHTML = `<div class="frequent-list">${frequent.map(e =>
-    `<button class="frequent-btn" onclick="selectExercise('${e.name.replace(/'/g, "\\'")}')">${e.name}</button>`
+    `<button class="frequent-btn" onclick="selectExercise('${escapeHtml(e.name).replace(/'/g, "&#039;")}')">${escapeHtml(e.name)}</button>`
   ).join("")}</div>`;
 }
 

@@ -11,7 +11,6 @@ ynh_script_progression --message="Backing up $app files..." --weight=5
 ynh_backup --src_path="$install_dir/backend/main.py"
 ynh_backup --src_path="$install_dir/backend/requirements.txt"
 ynh_backup --src_path="$install_dir/frontend"
-ynh_backup --src_path="$install_dir/.env"
 
 #=================================================
 # BACKUP DATABASE

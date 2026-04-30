@@ -1,18 +1,3 @@
-const API = "";
-let API_KEY = "";
-
-async function initConfig() {
-  const cfg = await fetch(`${API}/config`).then(r => r.json()).catch(() => ({}));
-  API_KEY = cfg.api_key || "";
-}
-
-function apiFetch(url, opts = {}) {
-  return fetch(url, {
-    ...opts,
-    headers: { "Content-Type": "application/json", "X-API-Key": API_KEY, ...(opts.headers || {}) }
-  });
-}
-
 let currentSessionId = null;
 let setCount = 1;
 let currentTags = [];
@@ -92,8 +77,8 @@ async function loadSessions() {
       <div>
         <div class="session-date">${formatDate(s.date)}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;align-items:center">
-          ${s.notes ? `<span style="color:var(--text-muted);font-size:0.82rem">${s.notes}</span>` : ""}
-          ${(s.tags||[]).map(t => `<span class="tag">${t}</span>`).join("")}
+          ${s.notes ? `<span style="color:var(--text-muted);font-size:0.82rem">${escapeHtml(s.notes)}</span>` : ""}
+          ${(s.tags||[]).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}
         </div>
       </div>
       <div class="session-actions">
@@ -122,7 +107,7 @@ async function loadTagFilters() {
   if (!tags.length) { el.innerHTML = ""; return; }
   el.innerHTML = `
     <button class="tag-filter-btn ${!activeFilter ? "active" : ""}" onclick="setFilter(null)">Tout</button>
-    ${tags.map(t => `<button class="tag-filter-btn ${activeFilter===t?"active":""}" onclick="setFilter('${t}')">${t}</button>`).join("")}
+    ${tags.map(t => `<button class="tag-filter-btn ${activeFilter===t?"active":""}" onclick="setFilter('${escapeHtml(t)}')">${escapeHtml(t)}</button>`).join("")}
   `;
 }
 
@@ -273,7 +258,7 @@ async function loadLogs() {
     return `
     <div class="log-exercise">
       <div class="log-exercise-name">
-        <span style="color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(110,231,183,0.4)" onclick="event.stopPropagation();location.href='progress.html?ex=${encodeURIComponent(name)}'">${name}</span>
+        <span style="color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(110,231,183,0.4)" onclick="event.stopPropagation();location.href='progress.html?ex=${encodeURIComponent(name)}'">${escapeHtml(name)}</span>
         <div class="dot-menu">
           <button class="dot-btn" onclick="event.stopPropagation(); toggleMenu(this)">···</button>
           <div class="dot-dropdown hidden">

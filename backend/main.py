@@ -9,15 +9,23 @@ import sqlite3, os, json
 API_KEY = os.environ.get("MUSCU_API_KEY", "")
 
 app = FastAPI(title="Muscu Tracker")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=[], allow_credentials=False,
+                   allow_methods=["GET", "POST", "PATCH", "DELETE"],
+                   allow_headers=["X-API-Key", "Content-Type"])
 
 @app.middleware("http")
 async def api_key_guard(request: Request, call_next):
-    # /config est exempt (servi après SSO, permet au frontend de récupérer la clé)
-    if request.url.path.startswith("/api/") and API_KEY:
-        if request.headers.get("X-API-Key") != API_KEY:
+    if request.url.path.startswith("/api/"):
+        # Fail-safe: reject all /api/ requests if MUSCU_API_KEY is not set or wrong
+        if not API_KEY or request.headers.get("X-API-Key") != API_KEY:
             return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
     return await call_next(request)
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    import logging
+    logging.exception("Unhandled exception on %s", request.url.path)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 @app.get("/config")
 def get_config():
@@ -87,7 +95,13 @@ class LogIn(BaseModel):
 @app.get("/api/sessions")
 def list_sessions(tag: Optional[str] = Query(None)):
     with db() as con:
-        rows = con.execute("SELECT * FROM session ORDER BY date DESC").fetchall()
+        rows = con.execute("""
+            SELECT s.*, COUNT(DISTINCT l.exercise_id) AS exercise_count
+            FROM session s
+            LEFT JOIN log l ON l.session_id = s.id
+            GROUP BY s.id
+            ORDER BY s.date DESC
+        """).fetchall()
         sessions = [session_row(r) for r in rows]
         if tag:
             sessions = [s for s in sessions if tag.lower() in [t.lower() for t in s["tags"]]]

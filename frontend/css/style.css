@@ -581,3 +581,44 @@ canvas { max-height: 280px; }
   padding: 2px 8px;
   font-size: 0.78rem;
 }
+
+/* ──────────────────────────────────────────────
+   Mobile / small screen improvements (#8)
+   ────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Nav: let links wrap gracefully */
+  nav { flex-wrap: wrap; gap: 8px; padding: 12px 16px; }
+  nav a, nav span { font-size: 0.85rem; }
+
+  /* Stack form rows vertically */
+  .form-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .form-row input, .form-row select, .form-row button {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Session cards: tighter padding */
+  .session-card { padding: 12px 14px; }
+
+  /* Set builder rows */
+  .set-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .set-row input { width: calc(50% - 20px); }
+
+  /* Modal: full width on small screens */
+  .modal-box {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 92vh;
+  }
+
+  /* Stats grid: single column on very small screens */
+  .stats-grid { grid-template-columns: 1fr; }
+}
+

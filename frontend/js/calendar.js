@@ -1,20 +1,9 @@
-const API = "";
-let API_KEY = "";
-
-function apiFetch(url, opts = {}) {
-  return fetch(url, {
-    ...opts,
-    headers: { "Content-Type": "application/json", "X-API-Key": API_KEY, ...(opts.headers || {}) }
-  });
-}
-
 let allSessions = [];
 let current = new Date();
 current.setDate(1);
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const cfg = await fetch(`${API}/config`).then(r => r.json()).catch(() => ({}));
-  API_KEY = cfg.api_key || "";
+  await initConfig();
   allSessions = await apiFetch(`${API}/api/sessions`).then(r => r.json());
   document.getElementById("btn-prev").onclick = () => { current.setMonth(current.getMonth() - 1); render(); };
   document.getElementById("btn-next").onclick = () => { current.setMonth(current.getMonth() + 1); render(); };
@@ -61,11 +50,11 @@ function renderStats(sessions, year, month) {
     </div>
     <div class="stat-card">
       <div class="stat-label">Tag dominant</div>
-      <div class="stat-value" style="font-size:1rem">${topTag}</div>
+      <div class="stat-value" style="font-size:1rem">${escapeHtml(topTag)}</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Exos logués</div>
-      <div class="stat-value">${sessions.reduce((n,s) => n, 0)}</div>
+      <div class="stat-value">${sessions.reduce((n,s) => n + (s.exercise_count || 0), 0)}</div>
     </div>
   `;
 }
