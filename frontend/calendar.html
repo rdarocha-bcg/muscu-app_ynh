@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendrier — Muscu Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav>
+    <span class="logo">Muscu</span>
+    <a href="index.html">Séances</a>
+    <a href="calendar.html" class="active">Calendrier</a>
+    <a href="progress.html">Progression</a>
+  </nav>
+
+  <main>
+    <div class="header-row">
+      <h1 id="cal-title">Avril 2026</h1>
+      <div style="display:flex;gap:8px">
+        <button id="btn-today" class="btn-ghost hidden">Aujourd'hui</button>
+        <button id="btn-prev" class="btn-ghost">←</button>
+        <button id="btn-next" class="btn-ghost">→</button>
+      </div>
+    </div>
+
+    <!-- Stats mois -->
+    <div class="stats-grid" id="month-stats" style="margin-bottom:20px"></div>
+
+    <!-- Calendrier -->
+    <div class="card" style="padding:16px">
+      <div class="cal-grid-header">
+        <span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span>
+        <span>Ven</span><span>Sam</span><span>Dim</span>
+      </div>
+      <div id="cal-grid" class="cal-grid"></div>
+    </div>
+
+    <!-- Séances du mois -->
+    <div id="month-sessions"></div>
+  </main>
+
+  <script src="js/calendar.js"></script>
+</body>
+</html>
