@@ -145,10 +145,11 @@ async function createSession() {
 }
 
 async function deleteSession(id) {
-  if (!confirm("Supprimer cette séance ?")) return;
-  await apiFetch(`${API}/api/sessions/${id}`, { method: "DELETE" });
-  loadSessions();
-  loadTagFilters();
+  showConfirm("Supprimer cette séance ?", async () => {
+    await apiFetch(`${API}/api/sessions/${id}`, { method: "DELETE" });
+    loadSessions();
+    loadTagFilters();
+  });
 }
 
 // Edit modal
@@ -383,26 +384,27 @@ async function saveEditExercise() {
 }
 
 async function deleteExerciseLogs(key) {
-  if (!confirm("Supprimer cet exercice ?")) return;
-  const name = decodeURIComponent(key);
-  const ids = _logGroups[name].map(s => s.id);
-  await Promise.all(ids.map(id =>
-    apiFetch(`${API}/api/logs/${id}`, { method: "DELETE" })
-  ));
-  loadLogs();
+  showConfirm("Supprimer cet exercice ?", async () => {
+    const name = decodeURIComponent(key);
+    const ids = _logGroups[name].map(s => s.id);
+    await Promise.all(ids.map(id =>
+      apiFetch(`${API}/api/logs/${id}`, { method: "DELETE" })
+    ));
+    loadLogs();
+  });
 }
 
 // Tags rendering
 function renderSelectedTags() {
   document.getElementById("tags-selected").innerHTML =
-    currentTags.map((t, i) => `<span class="tag tag-removable" onclick="removeTag(${i})">✕ ${t}</span>`).join("");
+    currentTags.map((t, i) => `<span class="tag tag-removable" onclick="removeTag(${i})">✕ ${escapeHtml(t)}</span>`).join("");
 }
 
 function removeTag(i) { currentTags.splice(i, 1); renderSelectedTags(); }
 
 function renderEditTags() {
   document.getElementById("edit-tags-selected").innerHTML =
-    editTags.map((t, i) => `<span class="tag tag-removable" onclick="removeEditTag(${i})">✕ ${t}</span>`).join("");
+    editTags.map((t, i) => `<span class="tag tag-removable" onclick="removeEditTag(${i})">✕ ${escapeHtml(t)}</span>`).join("");
 }
 
 function removeEditTag(i) { editTags.splice(i, 1); renderEditTags(); }
