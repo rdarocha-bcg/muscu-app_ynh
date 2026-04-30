@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import sqlite3, os, json
+from migrations.runner import run_migrations
 
 API_KEY = os.environ.get("MUSCU_API_KEY", "")
 
@@ -40,38 +41,10 @@ def db():
     return con
 
 def init_db():
-    with db() as con:
-        con.executescript("""
-        CREATE TABLE IF NOT EXISTS session (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
-            notes TEXT,
-            tags TEXT NOT NULL DEFAULT '[]'
-        );
-        -- migrate: add tags column if missing
+    run_migrations(DB)
 
-        CREATE TABLE IF NOT EXISTS exercise (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS log (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id INTEGER NOT NULL REFERENCES session(id) ON DELETE CASCADE,
-            exercise_id INTEGER NOT NULL REFERENCES exercise(id),
-            set_number INTEGER NOT NULL DEFAULT 1,
-            reps INTEGER,
-            weight REAL
-        );
-        """)
-
-def migrate_db():
-    with db() as con:
-        cols = [r[1] for r in con.execute("PRAGMA table_info(session)").fetchall()]
-        if "tags" not in cols:
-            con.execute("ALTER TABLE session ADD COLUMN tags TEXT NOT NULL DEFAULT '[]'")
 
 init_db()
-migrate_db()
 
 def session_row(r):
     d = dict(r)
@@ -93,7 +66,7 @@ class LogIn(BaseModel):
 
 # Sessions
 @app.get("/api/sessions")
-def list_sessions(tag: Optional[str] = Query(None)):
+def list_sessions(tag: Optional[str] = Query(None), limit: Optional[int] = Query(None), offset: int = Query(0)):
     with db() as con:
         rows = con.execute("""
             SELECT s.*, COUNT(DISTINCT l.exercise_id) AS exercise_count
@@ -105,7 +78,10 @@ def list_sessions(tag: Optional[str] = Query(None)):
         sessions = [session_row(r) for r in rows]
         if tag:
             sessions = [s for s in sessions if tag.lower() in [t.lower() for t in s["tags"]]]
-        return sessions
+        total = len(sessions)
+        end = offset + limit if limit is not None else None
+        sessions = sessions[offset:end]
+        return {"data": sessions, "total": total, "limit": limit, "offset": offset}
 
 @app.post("/api/sessions")
 def create_session(s: SessionIn):
@@ -185,7 +161,7 @@ def frequent_exercises(limit: int = 5):
 
 # Progress
 @app.get("/api/progress/{exercise}")
-def get_progress(exercise: str):
+def get_progress(exercise: str, limit: Optional[int] = Query(None), offset: int = Query(0)):
     with db() as con:
         rows = con.execute("""
             SELECT s.date, l.set_number, l.reps, l.weight
@@ -195,7 +171,11 @@ def get_progress(exercise: str):
             WHERE LOWER(e.name)=LOWER(?)
             ORDER BY s.date, l.set_number
         """, (exercise,)).fetchall()
-        return [dict(r) for r in rows]
+        data = [dict(r) for r in rows]
+        total = len(data)
+        end = offset + limit if limit is not None else None
+        data = data[offset:end]
+        return {"data": data, "total": total, "limit": limit, "offset": offset}
 
 _frontend_dir = os.environ.get("MUSCU_FRONTEND_DIR", os.path.join(os.path.dirname(__file__), "../frontend"))
 app.mount("/", StaticFiles(directory=_frontend_dir, html=True), name="static")
