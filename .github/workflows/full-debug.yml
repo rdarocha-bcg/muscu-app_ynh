@@ -1,0 +1,81 @@
+name: Full Debug Investigation
+
+on: workflow_dispatch
+
+permissions:
+  contents: read
+
+jobs:
+  investigate:
+    name: Full investigation of muscu-app
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - name: Setup SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.YNH_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.YNH_SSH_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Full Investigation
+        env:
+          SSH_HOST: ${{ secrets.YNH_SSH_HOST }}
+          SSH_USER: ${{ secrets.YNH_SSH_USER }}
+          SSH_PORT: ${{ vars.YNH_SSH_PORT || '22' }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p "$SSH_PORT" \
+              -o StrictHostKeyChecking=yes \
+              -o UserKnownHostsFile=~/.ssh/known_hosts \
+              -o BatchMode=yes \
+              -o IdentitiesOnly=yes \
+              "$SSH_USER@$SSH_HOST" bash -s << 'SSHEOF'
+
+          echo "=== What's listening on port 8765 ==="
+          sudo lsof -i :8765 2>/dev/null || echo "No process on port 8765"
+
+          echo ""
+          echo "=== All listening ports ==="
+          sudo ss -tulpn | grep LISTEN | head -20
+
+          echo ""
+          echo "=== Backend process status ==="
+          ps aux | grep -E '[u]vicorn|[p]ython.*main' | grep -v grep || echo "No uvicorn process found"
+
+          echo ""
+          echo "=== Service detailed status ==="
+          sudo systemctl status muscu-app --no-pager || true
+
+          echo ""
+          echo "=== Recent service errors ==="
+          sudo journalctl -u muscu-app -p err -n 20 --no-pager || true
+
+          echo ""
+          echo "=== YunoHost app info ==="
+          yunohost app info muscu-app 2>/dev/null || echo "App info unavailable"
+
+          echo ""
+          echo "=== Try to curl the API directly ==="
+          curl -v http://127.0.0.1:8765/ 2>&1 | head -30 || true
+
+          echo ""
+          echo "=== SQLite DB size and permissions ==="
+          ls -lh /home/yunohost.app/muscu-app/muscu.db 2>/dev/null || \
+          ls -lh /var/www/muscu-app/muscu.db 2>/dev/null || \
+          find /home -name 'muscu.db' -ls 2>/dev/null || echo "DB not found at expected paths"
+
+          echo ""
+          echo "=== Disk space ==="
+          df -h /home /tmp / 2>/dev/null
+
+          echo ""
+          echo "=== Memory ==="
+          free -h
+
+          SSHEOF

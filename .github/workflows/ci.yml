@@ -20,6 +20,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
 
       - name: Install dependencies
         run: pip install -r backend/requirements.txt
@@ -31,3 +32,30 @@ jobs:
         run: |
           cd backend
           python -c "import main; print('main.py imports OK')"
+
+      - name: Run tests
+        run: |
+          pip install pytest httpx --quiet
+          if [ -d backend/tests ]; then
+            cd backend && pytest tests/ -v
+          else
+            echo "No tests found yet — add tests under backend/tests/"
+          fi
+
+  manifest:
+    name: Manifest (TOML)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate manifest.toml
+        run: |
+          python3 - <<'EOF'
+          import sys, tomllib
+          with open("manifest.toml", "rb") as f:
+              data = tomllib.load(f)
+          for key in ["id", "name", "description", "version"]:
+              if key not in data:
+                  sys.exit(f"Missing required key in manifest.toml: {key}")
+          print(f"manifest.toml OK — app id={data['id']} version={data['version']}")
+          EOF

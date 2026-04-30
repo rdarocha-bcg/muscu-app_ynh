@@ -10,47 +10,94 @@ on:
 permissions:
   contents: read
 
-env:
-  DEFAULT_APP_ID: muscu-app
-  DEFAULT_SOURCE_URL: https://github.com/rdarocha-bcg/muscu-app_ynh
-  DEFAULT_APP_PATH: /
+concurrency:
+  group: deploy-ynh-production
+  cancel-in-progress: false
 
 jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    environment:
+      name: production
+    if: >-
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up SSH
+      - name: Resolve deployment configuration
+        env:
+          DEFAULT_APP_ID: muscu-app
+          DEFAULT_SOURCE_URL: https://github.com/rdarocha-bcg/muscu-app_ynh
+          DEFAULT_APP_PATH: /
+          VAR_APP_ID: ${{ vars.YNH_APP_INSTANCE_ID }}
+          VAR_SOURCE_URL: ${{ vars.YNH_APP_SOURCE_URL }}
+          VAR_SSH_PORT: ${{ vars.YNH_SSH_PORT }}
+          VAR_APP_PATH: ${{ vars.YNH_APP_PATH }}
         run: |
-          install -m 600 -D /dev/null ~/.ssh/id_ed25519
-          echo "${{ secrets.YNH_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          echo "${{ secrets.YNH_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          APP_ID="${VAR_APP_ID:-$DEFAULT_APP_ID}"
+          SOURCE_URL="${VAR_SOURCE_URL:-$DEFAULT_SOURCE_URL}"
+          SSH_PORT="${VAR_SSH_PORT:-22}"
+          APP_PATH="${VAR_APP_PATH:-$DEFAULT_APP_PATH}"
+
+          case "$SOURCE_URL" in
+            *_ynh|*_ynh.git) ;;
+            *)
+              echo "::error::SOURCE_URL must target a YunoHost packaging repo (ending with '_ynh')."
+              exit 1
+              ;;
+          esac
+
+          echo "APP_ID=$APP_ID"         >> "$GITHUB_ENV"
+          echo "SOURCE_URL=$SOURCE_URL" >> "$GITHUB_ENV"
+          echo "SSH_PORT=$SSH_PORT"     >> "$GITHUB_ENV"
+          echo "APP_PATH=$APP_PATH"     >> "$GITHUB_ENV"
+
+      - name: Setup SSH private key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.YNH_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+
+      - name: Configure SSH known hosts
+        env:
+          KNOWN_HOSTS: ${{ secrets.YNH_SSH_KNOWN_HOSTS }}
+        run: |
+          if [ -z "$KNOWN_HOSTS" ]; then
+            echo "::error::Missing required secret: YNH_SSH_KNOWN_HOSTS"
+            exit 1
+          fi
+          printf '%s\n' "$KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
 
       - name: Deploy (install or upgrade)
         env:
           SSH_HOST: ${{ secrets.YNH_SSH_HOST }}
           SSH_USER: ${{ secrets.YNH_SSH_USER }}
-          SSH_PORT: ${{ vars.YNH_SSH_PORT || '22' }}
-          APP_ID: ${{ vars.YNH_APP_INSTANCE_ID || env.DEFAULT_APP_ID }}
-          SOURCE_URL: ${{ vars.YNH_APP_SOURCE_URL || env.DEFAULT_SOURCE_URL }}
-          APP_PATH: ${{ vars.YNH_APP_PATH || env.DEFAULT_APP_PATH }}
         run: |
-          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" bash -s -- \
-            "$APP_ID" "$SOURCE_URL" "$APP_PATH" <<'ENDSSH'
+          ssh -i "$HOME/.ssh/id_ed25519" \
+              -p "$SSH_PORT" \
+              -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes \
+              -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+              -o IdentitiesOnly=yes \
+              "$SSH_USER@$SSH_HOST" bash -s -- \
+              "$APP_ID" "$SOURCE_URL" "$APP_PATH" <<'ENDSSH'
             APP_ID="$1"
             SOURCE_URL="$2"
             APP_PATH="$3"
 
             if yunohost app list --output-as json | grep -q "\"id\": \"$APP_ID\""; then
               echo "App $APP_ID already installed — upgrading…"
-              yunohost app upgrade "$APP_ID" --file "$SOURCE_URL" --no-safety-backup
+              sudo yunohost app upgrade "$APP_ID" -u "$SOURCE_URL" --no-safety-backup
             else
               echo "App $APP_ID not found — installing…"
-              yunohost app install "$SOURCE_URL" \
+              sudo yunohost app install "$SOURCE_URL" \
                 --args "domain=$(hostname --fqdn)&path=$APP_PATH" \
                 --no-safety-backup
             fi
@@ -60,8 +107,12 @@ jobs:
         env:
           SSH_HOST: ${{ secrets.YNH_SSH_HOST }}
           SSH_USER: ${{ secrets.YNH_SSH_USER }}
-          SSH_PORT: ${{ vars.YNH_SSH_PORT || '22' }}
-          APP_ID: ${{ vars.YNH_APP_INSTANCE_ID || env.DEFAULT_APP_ID }}
         run: |
-          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
-            "systemctl is-active '$APP_ID' && echo 'Service is running'"
+          ssh -i "$HOME/.ssh/id_ed25519" \
+              -p "$SSH_PORT" \
+              -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes \
+              -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+              -o IdentitiesOnly=yes \
+              "$SSH_USER@$SSH_HOST" \
+              "systemctl is-active '$APP_ID' && echo '✅ Service $APP_ID is running'"
