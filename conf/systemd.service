@@ -1,0 +1,28 @@
+[Unit]
+Description=Muscu Tracker - workout tracking app
+After=network.target
+
+[Service]
+Type=simple
+User=__APP__
+Group=__APP__
+WorkingDirectory=__INSTALL_DIR__/backend
+EnvironmentFile=__INSTALL_DIR__/.env
+ExecStart=__INSTALL_DIR__/venv/bin/uvicorn main:app \
+    --host 127.0.0.1 \
+    --port __PORT__ \
+    --forwarded-allow-ips=*
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=__APP__
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=__DATA_DIR__
+
+[Install]
+WantedBy=multi-user.target

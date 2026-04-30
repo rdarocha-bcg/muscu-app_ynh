@@ -23,7 +23,7 @@ async def api_key_guard(request: Request, call_next):
 def get_config():
     return {"api_key": API_KEY}
 
-DB = os.path.join(os.path.dirname(__file__), "muscu.db")
+DB = os.environ.get("MUSCU_DB_PATH", os.path.join(os.path.dirname(__file__), "muscu.db"))
 
 def db():
     con = sqlite3.connect(DB)
@@ -183,4 +183,5 @@ def get_progress(exercise: str):
         """, (exercise,)).fetchall()
         return [dict(r) for r in rows]
 
-app.mount("/", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "../frontend"), html=True), name="static")
+_frontend_dir = os.environ.get("MUSCU_FRONTEND_DIR", os.path.join(os.path.dirname(__file__), "../frontend"))
+app.mount("/", StaticFiles(directory=_frontend_dir, html=True), name="static")

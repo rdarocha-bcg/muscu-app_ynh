@@ -1,0 +1,57 @@
+packaging_format = 2
+
+id = "muscu-app"
+name = "Muscu Tracker"
+description.en = "Self-hosted workout tracker with exercise logging, calendar, and progress charts."
+description.fr = "Traqueur de séances de musculation auto-hébergé avec journal d'exercices, calendrier et courbes de progression."
+
+version = "1.0~ynh1"
+
+maintainers = ["rdarocha"]
+
+[upstream]
+license = "AGPL-3.0-or-later"
+code = "https://github.com/rdarocha-bcg/muscu-app_ynh"
+
+[integration]
+yunohost = ">= 11.2"
+helpers_version = "2.1"
+architectures = "all"
+multi_instance = false
+ldap = false
+sso = false
+disk = "150M"
+ram.build = "128M"
+ram.runtime = "64M"
+
+[install]
+
+    [install.domain]
+    type = "domain"
+
+    [install.path]
+    type = "path"
+    default = "/"
+
+    [install.init_main_permission]
+    type = "group"
+    default = "admins"
+
+[resources]
+
+    [resources.system_user]
+
+    [resources.install_dir]
+    dir = "/opt/yunohost/__APP__"
+
+    [resources.data_dir]
+    dir = "/home/yunohost.app/__APP__"
+
+    [resources.permissions]
+    main.url = "/"
+
+    [resources.ports]
+    main.default = 8765
+
+    [resources.apt]
+    packages = ["python3", "python3-venv", "python3-pip"]

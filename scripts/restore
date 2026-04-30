@@ -1,0 +1,51 @@
+#!/bin/bash
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# RESTORE APP FILES
+#=================================================
+ynh_script_progression --message="Restoring $app files..." --weight=5
+
+ynh_restore_file --origin_path="$install_dir/backend/main.py"
+ynh_restore_file --origin_path="$install_dir/backend/requirements.txt"
+ynh_restore_file --origin_path="$install_dir/frontend"
+ynh_restore_file --origin_path="$install_dir/.env"
+
+#=================================================
+# RESTORE DATABASE
+#=================================================
+ynh_script_progression --message="Restoring database..." --weight=5
+
+ynh_restore_file --origin_path="$data_dir"
+
+#=================================================
+# RECREATE PYTHON VENV
+#=================================================
+ynh_script_progression --message="Recreating Python virtual environment..." --weight=10
+
+python3 -m venv "$install_dir/venv"
+"$install_dir/venv/bin/pip" install --quiet --upgrade pip
+"$install_dir/venv/bin/pip" install --quiet -r "$install_dir/backend/requirements.txt"
+
+#=================================================
+# FIX PERMISSIONS
+#=================================================
+chown -R "$app:$app" "$install_dir"
+chown -R "$app:$app" "$data_dir"
+
+#=================================================
+# SYSTEMD & NGINX
+#=================================================
+ynh_script_progression --message="Restoring systemd and NGINX configuration..." --weight=2
+
+ynh_restore_file --origin_path="/etc/nginx/conf.d/$domain.d/$app.conf"
+ynh_add_systemd_config
+ynh_systemd_action --service_name=nginx --action=reload
+ynh_systemd_action --service_name="$app" --action=start --log_path=systemd --line_match="Application startup complete"
+
+#=================================================
+# END
+#=================================================
+ynh_script_progression --message="Restoration of $app completed!" --last

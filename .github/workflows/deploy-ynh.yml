@@ -1,0 +1,67 @@
+name: Deploy to YunoHost
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DEFAULT_APP_ID: muscu-app
+  DEFAULT_SOURCE_URL: https://github.com/rdarocha-bcg/muscu-app_ynh
+  DEFAULT_APP_PATH: /
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_ed25519
+          echo "${{ secrets.YNH_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.YNH_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Deploy (install or upgrade)
+        env:
+          SSH_HOST: ${{ secrets.YNH_SSH_HOST }}
+          SSH_USER: ${{ secrets.YNH_SSH_USER }}
+          SSH_PORT: ${{ vars.YNH_SSH_PORT || '22' }}
+          APP_ID: ${{ vars.YNH_APP_INSTANCE_ID || env.DEFAULT_APP_ID }}
+          SOURCE_URL: ${{ vars.YNH_APP_SOURCE_URL || env.DEFAULT_SOURCE_URL }}
+          APP_PATH: ${{ vars.YNH_APP_PATH || env.DEFAULT_APP_PATH }}
+        run: |
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" bash -s -- \
+            "$APP_ID" "$SOURCE_URL" "$APP_PATH" <<'ENDSSH'
+            APP_ID="$1"
+            SOURCE_URL="$2"
+            APP_PATH="$3"
+
+            if yunohost app list --output-as json | grep -q "\"id\": \"$APP_ID\""; then
+              echo "App $APP_ID already installed — upgrading…"
+              yunohost app upgrade "$APP_ID" --file "$SOURCE_URL" --no-safety-backup
+            else
+              echo "App $APP_ID not found — installing…"
+              yunohost app install "$SOURCE_URL" \
+                --args "domain=$(hostname --fqdn)&path=$APP_PATH" \
+                --no-safety-backup
+            fi
+          ENDSSH
+
+      - name: Verify service is running
+        env:
+          SSH_HOST: ${{ secrets.YNH_SSH_HOST }}
+          SSH_USER: ${{ secrets.YNH_SSH_USER }}
+          SSH_PORT: ${{ vars.YNH_SSH_PORT || '22' }}
+          APP_ID: ${{ vars.YNH_APP_INSTANCE_ID || env.DEFAULT_APP_ID }}
+        run: |
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
+            "systemctl is-active '$APP_ID' && echo 'Service is running'"

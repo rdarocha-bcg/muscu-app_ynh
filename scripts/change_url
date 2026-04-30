@@ -1,0 +1,17 @@
+#!/bin/bash
+# Muscu-app only works installed at the root path (/).
+# The JavaScript frontend uses relative URLs (const API = "") which breaks under subpaths.
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+if [ "$new_path" != "/" ]; then
+    ynh_die --message="Muscu-app can only be installed at the root path (/). \
+Subpath installs are not supported because the frontend JavaScript uses relative \
+URLs that assume the app is served from the domain root."
+fi
+
+ynh_script_progression --message="Updating NGINX configuration..." --weight=1
+ynh_add_nginx_config
+
+ynh_script_progression --message="URL change completed!" --last
