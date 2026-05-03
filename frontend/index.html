@@ -9,11 +9,10 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <nav>
-    <span class="logo">Muscu</span>
-    <a href="index.html" class="active">Séances</a>
-    <a href="calendar.html">Calendrier</a>
-    <a href="progress.html">Progression</a>
+  <nav class="app-nav">
+    <a href="index.html" class="nav-link" data-page="index">🏋️ Séances</a>
+    <a href="calendar.html" class="nav-link" data-page="calendar">📅 Calendrier</a>
+    <a href="progress.html" class="nav-link" data-page="progress">📈 Progression</a>
   </nav>
 
   <main>
@@ -153,5 +152,6 @@
 
   <script src="js/common.js"></script>
   <script src="js/app.js"></script>
+  <script>document.querySelector('[data-page="index"]')?.classList.add("nav-link--active");</script>
 </body>
 </html>
