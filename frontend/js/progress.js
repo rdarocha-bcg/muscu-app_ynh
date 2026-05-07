@@ -9,8 +9,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("select-exercise").onchange = onExerciseChange;
   document.querySelectorAll(".tab-btn").forEach(btn => {
     btn.onclick = () => {
-      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(b => {
+        b.classList.remove("active");
+        b.setAttribute("aria-selected", "false");
+      });
       btn.classList.add("active");
+      btn.setAttribute("aria-selected", "true");
       currentTab = btn.dataset.tab;
       renderChart(currentData);
     };
@@ -22,7 +26,7 @@ async function loadFrequent() {
   const el = document.getElementById("frequent-exercises");
   if (!frequent.length) { el.innerHTML = ""; return; }
   el.innerHTML = `<div class="frequent-list">${frequent.map(e =>
-    `<button class="frequent-btn" onclick="selectExercise('${escapeHtml(e.name).replace(/'/g, "&#039;")}')">${escapeHtml(e.name)}</button>`
+    `<button type="button" class="frequent-btn" onclick="selectExercise('${escapeHtml(e.name).replace(/'/g, "&#039;")}')">${escapeHtml(e.name)}</button>`
   ).join("")}</div>`;
 }
 

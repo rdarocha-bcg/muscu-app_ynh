@@ -9,40 +9,44 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <nav>
+  <nav aria-label="Navigation principale">
     <span class="logo">Muscu</span>
-    <a href="index.html" class="active">Séances</a>
+    <a href="index.html" class="active" aria-current="page">Séances</a>
     <a href="calendar.html">Calendrier</a>
     <a href="progress.html">Progression</a>
   </nav>
 
   <main>
+    <nav aria-label="Fil d'Ariane" class="breadcrumb">
+      <span aria-current="page">Séances</span>
+    </nav>
+
     <div class="header-row">
       <h1>Séances</h1>
-      <button id="btn-new-session" class="btn-primary">+ Nouvelle séance</button>
+      <button type="button" id="btn-new-session" class="btn-primary">+ Nouvelle séance</button>
     </div>
 
     <!-- New session form -->
     <div id="form-new-session" class="card hidden">
       <h2>Nouvelle séance</h2>
       <div class="form-row">
-        <label>Date</label>
-        <input type="date" id="input-date">
+        <label for="input-date">Date</label>
+        <input type="date" id="input-date" aria-required="true">
       </div>
       <div class="form-row">
-        <label>Notes</label>
+        <label for="input-notes">Notes</label>
         <input type="text" id="input-notes" placeholder="Ex: Dos/Biceps">
       </div>
       <div class="form-row">
-        <label>Tags</label>
+        <label for="input-tag">Tags</label>
         <div class="tags-input-wrap">
           <div id="tags-selected"></div>
-          <input type="text" id="input-tag" placeholder="jambes, pecs… + Entrée">
+          <input type="text" id="input-tag" placeholder="jambes, pecs… + Entrée" autocomplete="off">
         </div>
       </div>
       <div class="form-actions">
-        <button id="btn-create-session" class="btn-primary">Créer</button>
-        <button id="btn-cancel-session" class="btn-ghost">Annuler</button>
+        <button type="button" id="btn-create-session" class="btn-primary">Créer</button>
+        <button type="button" id="btn-cancel-session" class="btn-ghost">Annuler</button>
       </div>
     </div>
 
@@ -58,94 +62,95 @@
     </div>
 
     <!-- Session detail modal -->
-    <div id="modal-session" class="modal hidden">
+    <div id="modal-session" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-box">
         <div class="modal-header">
           <h2 id="modal-title">Séance</h2>
           <div style="display:flex;gap:8px;align-items:center">
             <div id="modal-session-actions" style="display:flex;gap:8px">
-              <button class="btn-icon btn-icon-green" onclick="toggleAddExercise()" title="Ajouter un exercice">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <button type="button" class="btn-icon btn-icon-green" onclick="toggleAddExercise()" title="Ajouter un exercice" aria-label="Ajouter un exercice">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
                   <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
                 </svg>
               </button>
-              <button class="btn-icon btn-icon-red" onclick="deleteCurrentSession()" title="Supprimer la séance">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <button type="button" class="btn-icon btn-icon-red" onclick="deleteCurrentSession()" title="Supprimer la séance" aria-label="Supprimer la séance">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
                 </svg>
               </button>
             </div>
-            <button id="modal-close" class="btn-ghost">✕</button>
+            <button type="button" id="modal-close" class="btn-ghost" aria-label="Fermer la fenêtre">✕</button>
           </div>
         </div>
         <div id="logs-list"></div>
-        <div id="delete-confirm-panel" class="hidden" style="margin:12px 0;padding:14px;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.3);border-radius:var(--radius)">
+        <div id="delete-confirm-panel" class="hidden" role="region" aria-label="Confirmer la suppression" style="margin:12px 0;padding:14px;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.3);border-radius:var(--radius)">
           <p id="delete-confirm-text" style="font-size:0.88rem;margin-bottom:12px;color:var(--text)"></p>
           <div style="display:flex;gap:8px">
-            <button onclick="confirmDeleteSession()" class="btn-primary" style="background:var(--danger)">Supprimer</button>
-            <button onclick="cancelDeleteSession()" class="btn-ghost">Annuler</button>
+            <button type="button" onclick="confirmDeleteSession()" class="btn-primary" style="background:var(--danger)">Supprimer</button>
+            <button type="button" onclick="cancelDeleteSession()" class="btn-ghost">Annuler</button>
           </div>
         </div>
         <div id="add-exercise-panel" class="add-exercise hidden">
           <h3>Ajouter un exercice</h3>
           <div class="form-row">
-            <input type="text" id="input-exercise" placeholder="Nom de l'exercice" list="exercise-suggestions-add">
+            <label for="input-exercise">Exercice</label>
+            <input type="text" id="input-exercise" placeholder="Nom de l'exercice" list="exercise-suggestions-add" aria-required="true" autocomplete="off">
             <datalist id="exercise-suggestions-add"></datalist>
           </div>
           <div id="sets-builder"></div>
           <div class="form-actions">
-            <button id="btn-add-set" class="btn-ghost">+ Set</button>
-            <button id="btn-save-exercise" class="btn-primary">Enregistrer</button>
+            <button type="button" id="btn-add-set" class="btn-ghost">+ Set</button>
+            <button type="button" id="btn-save-exercise" class="btn-primary">Enregistrer</button>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Edit exercise modal -->
-    <div id="modal-edit-exercise" class="modal hidden">
+    <div id="modal-edit-exercise" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-edit-exercise-title">
       <div class="modal-box" style="max-width:420px">
         <div class="modal-header">
-          <h2>Modifier l'exercice</h2>
-          <button id="edit-exercise-close" class="btn-ghost">✕</button>
+          <h2 id="modal-edit-exercise-title">Modifier l'exercice</h2>
+          <button type="button" id="edit-exercise-close" class="btn-ghost" aria-label="Fermer la fenêtre">✕</button>
         </div>
         <div class="form-row">
-          <label>Exercice</label>
-          <input type="text" id="edit-exercise-name" list="exercise-suggestions">
+          <label for="edit-exercise-name">Exercice</label>
+          <input type="text" id="edit-exercise-name" list="exercise-suggestions" aria-required="true" autocomplete="off">
           <datalist id="exercise-suggestions"></datalist>
         </div>
         <div id="edit-exercise-sets"></div>
         <div class="form-actions">
-          <button id="edit-exercise-add-set" class="btn-ghost">+ Set</button>
-          <button id="edit-exercise-save" class="btn-primary">Enregistrer</button>
+          <button type="button" id="edit-exercise-add-set" class="btn-ghost">+ Set</button>
+          <button type="button" id="edit-exercise-save" class="btn-primary">Enregistrer</button>
         </div>
       </div>
     </div>
 
     <!-- Edit session modal -->
-    <div id="modal-edit" class="modal hidden">
+    <div id="modal-edit" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-edit-session-title">
       <div class="modal-box" style="max-width:420px">
         <div class="modal-header">
-          <h2>Modifier la séance</h2>
-          <button id="edit-close" class="btn-ghost">✕</button>
+          <h2 id="modal-edit-session-title">Modifier la séance</h2>
+          <button type="button" id="edit-close" class="btn-ghost" aria-label="Fermer la fenêtre">✕</button>
         </div>
         <div class="form-row">
-          <label>Date</label>
-          <input type="date" id="edit-date">
+          <label for="edit-date">Date</label>
+          <input type="date" id="edit-date" aria-required="true">
         </div>
         <div class="form-row">
-          <label>Notes</label>
+          <label for="edit-notes">Notes</label>
           <input type="text" id="edit-notes" placeholder="Ex: Dos/Biceps">
         </div>
         <div class="form-row">
-          <label>Tags</label>
+          <label for="edit-tag-input">Tags</label>
           <div class="tags-input-wrap">
             <div id="edit-tags-selected"></div>
-            <input type="text" id="edit-tag-input" placeholder="+ Entrée">
+            <input type="text" id="edit-tag-input" placeholder="+ Entrée" autocomplete="off">
           </div>
         </div>
         <div class="form-actions">
-          <button id="btn-save-edit" class="btn-primary">Enregistrer</button>
-          <button id="edit-close-2" class="btn-ghost">Annuler</button>
+          <button type="button" id="btn-save-edit" class="btn-primary">Enregistrer</button>
+          <button type="button" id="edit-close-2" class="btn-ghost">Annuler</button>
         </div>
       </div>
     </div>

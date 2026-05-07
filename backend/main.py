@@ -1,15 +1,14 @@
-import os
-
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from config import get_api_key, get_frontend_dir
 from database import init_db
 from routers import exercises, logs, sessions, tags
 from routers import config as config_router
 
-API_KEY = os.environ.get("MUSCU_API_KEY", "")
+API_KEY = get_api_key()
 
 app = FastAPI(title="Muscu Tracker")
 app.add_middleware(
@@ -46,7 +45,5 @@ app.include_router(exercises.router)
 
 init_db()
 
-_frontend_dir = os.environ.get(
-    "MUSCU_FRONTEND_DIR", os.path.join(os.path.dirname(__file__), "../frontend")
-)
+_frontend_dir = get_frontend_dir()
 app.mount("/", StaticFiles(directory=_frontend_dir, html=True), name="static")

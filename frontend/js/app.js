@@ -7,9 +7,10 @@ let activeFilter = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   await initConfig();
-  loadSessions();
+  await loadSessions();
   loadExerciseSuggestions();
   loadTagFilters();
+  await handleSessionDeepLink();
 
   const today = new Date().toISOString().split("T")[0];
   document.getElementById("input-date").value = today;
@@ -47,7 +48,58 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.querySelectorAll(".dot-dropdown").forEach(d => d.classList.add("hidden"));
     }
   });
+
+  document.addEventListener("keydown", onEscapeCloseOverlays);
 });
+
+function stripSessionQueryFromUrl() {
+  const u = new URL(window.location.href);
+  if (!u.searchParams.has("session")) return;
+  u.searchParams.delete("session");
+  const q = u.searchParams.toString();
+  history.replaceState(null, "", u.pathname + (q ? `?${q}` : ""));
+}
+
+async function handleSessionDeepLink() {
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get("session");
+  if (!raw) return;
+  const sid = parseInt(raw, 10);
+  if (!Number.isFinite(sid)) return;
+  const data = await apiFetch(`${API}/api/sessions`).then(r => r.json());
+  const sessions = data.data ?? data;
+  const s = sessions.find(x => x.id === sid);
+  if (!s) return;
+  await openSession(s.id, s.date, s.notes || "");
+  stripSessionQueryFromUrl();
+}
+
+function onEscapeCloseOverlays(e) {
+  if (e.key !== "Escape") return;
+  const confirmPanel = document.getElementById("confirm-panel");
+  if (confirmPanel && confirmPanel.style.display === "flex") {
+    confirmPanel.style.display = "none";
+    e.preventDefault();
+    return;
+  }
+  const editExercise = document.getElementById("modal-edit-exercise");
+  if (editExercise && !editExercise.classList.contains("hidden")) {
+    closeEditExerciseModal();
+    e.preventDefault();
+    return;
+  }
+  const modalEdit = document.getElementById("modal-edit");
+  if (modalEdit && !modalEdit.classList.contains("hidden")) {
+    closeEditModal();
+    e.preventDefault();
+    return;
+  }
+  const modalSession = document.getElementById("modal-session");
+  if (modalSession && !modalSession.classList.contains("hidden")) {
+    closeModal();
+    e.preventDefault();
+  }
+}
 
 function onTagKeydown(inputId, getTags, selectedId, renderFn) {
   return (e) => {
@@ -84,10 +136,10 @@ async function loadSessions() {
       </div>
       <div class="session-actions">
         <div class="dot-menu">
-          <button class="dot-btn" onclick="event.stopPropagation(); toggleMenu(this)">···</button>
+          <button type="button" class="dot-btn" onclick="event.stopPropagation(); toggleMenu(this)" aria-expanded="false" aria-haspopup="true" aria-label="Actions pour cette séance">···</button>
           <div class="dot-dropdown hidden">
-            <button onclick="event.stopPropagation(); openEditModal(${s.id})">Modifier</button>
-            <button class="danger" onclick="event.stopPropagation(); deleteSession(${s.id})">Supprimer</button>
+            <button type="button" onclick="event.stopPropagation(); openEditModal(${s.id})">Modifier</button>
+            <button type="button" class="danger" onclick="event.stopPropagation(); deleteSession(${s.id})">Supprimer</button>
           </div>
         </div>
       </div>
@@ -263,15 +315,15 @@ async function loadLogs() {
       <div class="log-exercise-name">
         <span style="color:var(--accent);cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(110,231,183,0.4)" onclick="event.stopPropagation();location.href='progress.html?ex=${encodeURIComponent(name)}'">${escapeHtml(name)}</span>
         <div class="dot-menu">
-          <button class="dot-btn" onclick="event.stopPropagation(); toggleMenu(this)">···</button>
+          <button type="button" class="dot-btn" onclick="event.stopPropagation(); toggleMenu(this)" aria-expanded="false" aria-haspopup="true" aria-label="Actions pour ${escapeHtml(name)}">···</button>
           <div class="dot-dropdown hidden">
-            <button onclick="openEditExerciseModal('${key}')">Modifier</button>
-            <button class="danger" onclick="deleteExerciseLogs('${key}')">Supprimer</button>
+            <button type="button" onclick="openEditExerciseModal('${key}')">Modifier</button>
+            <button type="button" class="danger" onclick="deleteExerciseLogs('${key}')">Supprimer</button>
           </div>
         </div>
       </div>
       <table class="sets-table">
-        <tr><th></th><th>Reps</th><th>Poids</th></tr>
+        <tr><th scope="col" class="sr-only">Série</th><th scope="col">Reps</th><th scope="col">Poids</th></tr>
         ${sets.map((s, i) => `
           <tr>
             <td><span class="set-index">${i + 1}</span></td>
@@ -336,9 +388,9 @@ function setRowHTML(n, reps, weight, container) {
   return `
     <div class="set-row">
       <span class="set-num">${n}</span>
-      <input type="number" placeholder="Reps" class="input-reps" min="1" value="${reps || ""}">
-      <input type="number" placeholder="Poids (kg)" class="input-weight" step="0.5" min="0" value="${weight || ""}">
-      <button class="btn-ghost" onclick="this.parentElement.remove()">✕</button>
+      <input type="number" placeholder="Reps" class="input-reps" min="1" value="${reps || ""}" aria-label="Répétitions, série ${n}">
+      <input type="number" placeholder="Poids (kg)" class="input-weight" step="0.5" min="0" value="${weight || ""}" aria-label="Poids en kilogrammes, série ${n}">
+      <button type="button" class="btn-ghost" onclick="this.parentElement.remove()" aria-label="Retirer cette série">✕</button>
     </div>`;
 }
 

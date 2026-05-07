@@ -7,5 +7,5 @@ Self-hosted workout tracker: FastAPI backend, SQLite, static HTML/CSS/JS fronten
 Contributor workflow:
 
 - Track work in GitHub Issues (labels: ARCH, UX, A11Y, etc.).
-- See `AGENTS.md` for repository layout and validation commands.
+- See [CONTRIBUTING.md](CONTRIBUTING.md) for issue readiness (Definition of Ready) and [AGENTS.md](AGENTS.md) for layout and validation commands.
 - For local backend dev without YunoHost, run Uvicorn from `backend/` and set `const API` in `frontend/js/*.js` as documented in `AGENTS.md`.

@@ -10,6 +10,8 @@ This file gives coding agents a concise and reliable workflow for this repositor
 
 ## Repository map
 
+- `backend/models.py`: Pydantic bodies shared by routers (`SessionIn`, `LogIn`, `SetEntry`)
+- `backend/config.py`: Environment-backed settings (`get_api_key`, `get_frontend_dir`)
 - `backend/main.py`: FastAPI app — middleware, CORS, static mount, imports routers
 - `backend/database.py`: SQLite `db()` helper and `init_db()` (runs versioned migrations)
 - `backend/routers/`: Route modules (`sessions`, `logs`, `exercises`, `tags`, `config`)

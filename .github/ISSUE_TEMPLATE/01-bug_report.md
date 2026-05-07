@@ -23,3 +23,8 @@ labels: bug
 ## Notes
 
 <!-- Optional: logs, nginx, journalctl -->
+
+## Acceptance criteria (when fixed)
+
+- [ ] Bug no longer reproducible using the steps above
+- [ ] No regression on related flows (note which you checked)

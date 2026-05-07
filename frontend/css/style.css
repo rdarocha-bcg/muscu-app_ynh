@@ -4,7 +4,7 @@
   --surface2: #242424;
   --border: #2e2e2e;
   --text: #e8e8e8;
-  --text-muted: #888;
+  --text-muted: #767676;
   --accent: #6ee7b7;
   --accent-dark: #34d399;
   --danger: #f87171;
@@ -13,6 +13,23 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 html, body {
   overflow-x: hidden;
@@ -59,6 +76,30 @@ nav a {
 
 nav a:hover { color: var(--text); background: var(--surface2); }
 nav a.active { color: var(--accent); }
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.breadcrumb a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb [aria-current="page"] {
+  color: var(--text);
+  font-weight: 500;
+}
 
 main {
   max-width: 700px;
@@ -364,6 +405,12 @@ input:focus, select:focus { border-color: var(--accent); }
   cursor: default;
 }
 
+a.cal-day {
+  text-decoration: none;
+  color: inherit;
+  box-sizing: border-box;
+}
+
 .cal-day.other-month { color: var(--text-muted); opacity: 0.3; }
 
 .cal-day.has-session {
@@ -393,8 +440,15 @@ input:focus, select:focus { border-color: var(--accent); }
   justify-content: space-between;
   cursor: pointer;
   transition: border-color 0.15s;
+  text-decoration: none;
+  color: inherit;
+  box-sizing: border-box;
 }
 .month-session-item:hover { border-color: #444; }
+
+a.month-session-item:focus-visible {
+  border-color: var(--accent);
+}
 
 /* Set builder */
 .add-exercise {

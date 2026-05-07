@@ -1,21 +1,9 @@
-from typing import Optional
-
 from fastapi import APIRouter
-from pydantic import BaseModel
 
 from database import db
+from models import LogIn
 
 router = APIRouter()
-
-
-class SetEntry(BaseModel):
-    reps: Optional[int] = None
-    weight: Optional[float] = None
-
-
-class LogIn(BaseModel):
-    exercise: str
-    sets: list[SetEntry]
 
 
 @router.get("/api/sessions/{sid}/logs")

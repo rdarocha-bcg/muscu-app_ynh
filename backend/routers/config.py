@@ -1,10 +1,10 @@
-import os
-
 from fastapi import APIRouter
+
+from config import get_api_key
 
 router = APIRouter()
 
 
 @router.get("/config")
 def get_config():
-    return {"api_key": os.environ.get("MUSCU_API_KEY", "")}
+    return {"api_key": get_api_key()}

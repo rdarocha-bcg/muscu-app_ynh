@@ -2,9 +2,9 @@ import json
 from typing import Optional
 
 from fastapi import APIRouter, Query
-from pydantic import BaseModel
 
 from database import db
+from models import SessionIn
 
 router = APIRouter()
 
@@ -13,12 +13,6 @@ def session_row(r):
     d = dict(r)
     d["tags"] = json.loads(d.get("tags") or "[]")
     return d
-
-
-class SessionIn(BaseModel):
-    date: str
-    notes: Optional[str] = None
-    tags: list[str] = []
 
 
 @router.get("/api/sessions")

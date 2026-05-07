@@ -30,7 +30,13 @@ function render() {
   });
 
   renderStats(monthSessions, year, month);
-  renderGrid(year, month, monthSessions);
+
+  const firstIdByDate = {};
+  monthSessions.forEach(s => {
+    if (firstIdByDate[s.date] === undefined) firstIdByDate[s.date] = s.id;
+  });
+
+  renderGrid(year, month, monthSessions, firstIdByDate);
   renderSessionList(monthSessions);
 }
 
@@ -60,7 +66,7 @@ function renderStats(sessions, year, month) {
   `;
 }
 
-function renderGrid(year, month, monthSessions) {
+function renderGrid(year, month, monthSessions, firstIdByDate) {
   const sessionDates = new Set(monthSessions.map(s => s.date));
   const today = new Date().toISOString().split("T")[0];
 
@@ -95,8 +101,12 @@ function renderGrid(year, month, monthSessions) {
     if (!c.current) cls += " other-month";
     if (c.hasSession) cls += " has-session";
     if (c.isToday) cls += " today";
-    const onclick = c.hasSession ? `onclick="scrollToDate('${c.date}')"` : "";
-    return `<div class="${cls}" ${onclick}>${c.day}</div>`;
+    if (c.hasSession && c.current && c.date) {
+      const sid = firstIdByDate[c.date];
+      const label = `Ouvrir la séance du ${c.day}`;
+      return `<a href="index.html?session=${sid}" class="${cls}" aria-label="${escapeHtml(label)}">${c.day}</a>`;
+    }
+    return `<div class="${cls}">${c.day}</div>`;
   }).join("");
 }
 
@@ -110,24 +120,18 @@ function renderSessionList(sessions) {
   const sorted = [...sessions].sort((a,b) => a.date.localeCompare(b.date));
 
   el.innerHTML = sorted.map(s => `
-    <div class="month-session-item" id="session-${s.date}" onclick="location.href='index.html'">
+    <a class="month-session-item" id="session-${s.date}" href="index.html?session=${s.id}">
       <div>
         <div class="session-date">${formatDate(s.date)}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
-          ${s.notes ? `<span style="color:var(--text-muted);font-size:0.82rem">${s.notes}</span>` : ""}
-          ${(s.tags||[]).map(t => `<span class="tag">${t}</span>`).join("")}
+          ${s.notes ? `<span style="color:var(--text-muted);font-size:0.82rem">${escapeHtml(s.notes)}</span>` : ""}
+          ${(s.tags||[]).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}
         </div>
       </div>
-    </div>
+    </a>
   `).join("");
 }
 
-function scrollToDate(date) {
-  const el = document.getElementById(`session-${date}`);
-  if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-}
-
-function formatDate(dateStr) {
   const d = new Date(dateStr + "T12:00:00");
   return d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "long" });
 }

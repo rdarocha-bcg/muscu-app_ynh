@@ -55,6 +55,7 @@ function showError(msg) {
   if (!banner) {
     banner = document.createElement("div");
     banner.id = "error-banner";
+    banner.setAttribute("role", "alert");
     banner.style.cssText = "position:fixed;top:0;left:0;right:0;background:#f87171;color:#000;padding:12px 16px;font-size:0.875rem;z-index:9999;text-align:center;cursor:pointer;";
     banner.onclick = () => { banner.style.display = "none"; };
     document.body.prepend(banner);
@@ -79,13 +80,18 @@ function showConfirm(msg, onConfirm) {
     ].join(";");
     document.body.appendChild(panel);
   }
+  panel.setAttribute("role", "dialog");
+  panel.setAttribute("aria-modal", "true");
+  panel.setAttribute("aria-labelledby", "confirm-panel-desc");
   panel.innerHTML = `
+    <span id="confirm-panel-desc" class="sr-only">Confirmation</span>
     <p style="color:var(--text,#f9fafb);text-align:center;margin:0;font-size:0.9rem">${escapeHtml(msg)}</p>
     <div style="display:flex;gap:10px;width:100%">
-      <button id="confirm-yes" style="flex:1;padding:8px;border-radius:8px;background:#ef4444;color:#fff;border:none;cursor:pointer;font-weight:600">Supprimer</button>
-      <button id="confirm-no" style="flex:1;padding:8px;border-radius:8px;background:transparent;color:var(--text,#f9fafb);border:1px solid var(--border,#374151);cursor:pointer">Annuler</button>
+      <button type="button" id="confirm-yes" style="flex:1;padding:8px;border-radius:8px;background:#ef4444;color:#fff;border:none;cursor:pointer;font-weight:600">Confirmer la suppression</button>
+      <button type="button" id="confirm-no" style="flex:1;padding:8px;border-radius:8px;background:transparent;color:var(--text,#f9fafb);border:1px solid var(--border,#374151);cursor:pointer">Annuler</button>
     </div>`;
   panel.style.display = "flex";
-  document.getElementById("confirm-yes").onclick = () => { panel.style.display = "none"; onConfirm(); };
   document.getElementById("confirm-no").onclick  = () => { panel.style.display = "none"; };
+  document.getElementById("confirm-yes").onclick = () => { panel.style.display = "none"; onConfirm(); };
+  document.getElementById("confirm-no").focus();
 }
