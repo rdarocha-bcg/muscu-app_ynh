@@ -31,9 +31,10 @@ scp frontend/js/app.js frontend/js/calendar.js frontend/js/progress.js remi@remi
 scp frontend/css/style.css remi@remidarocha.fr:/home/remi/muscu-app/frontend/css/
 ```
 
-Backend (Python changes):
+Backend (Python changes — copy the whole `backend/` tree except local venv/DB):
 ```bash
-scp backend/main.py remi@remidarocha.fr:/home/remi/muscu-app/backend/main.py
+rsync -avz --exclude='muscu.db' --exclude='venv' --exclude='__pycache__' \
+  backend/ remi@remidarocha.fr:/home/remi/muscu-app/backend/
 ssh remi@remidarocha.fr "sudo systemctl restart muscu"
 ```
 
@@ -44,7 +45,10 @@ ssh remi@remidarocha.fr "sudo systemctl restart muscu"
 ```
 muscu-app/
 ├── backend/
-│   ├── main.py          # FastAPI app, all routes, DB init
+│   ├── main.py          # FastAPI app, middleware, static mount
+│   ├── database.py      # db() helper, init_db() → migrations
+│   ├── routers/       # REST route modules
+│   ├── migrations/      # Runner + versions/*.sql
 │   ├── muscu.db         # SQLite — LOCAL DEV ONLY (prod is on server)
 │   └── requirements.txt # fastapi, uvicorn[standard]
 └── frontend/

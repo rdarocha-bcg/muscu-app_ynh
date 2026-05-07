@@ -5,7 +5,7 @@ name = "Muscu Tracker"
 description.en = "Self-hosted workout tracker with exercise logging, calendar, and progress charts."
 description.fr = "Traqueur de séances de musculation auto-hébergé avec journal d'exercices, calendrier et courbes de progression."
 
-version = "1.0~ynh1"
+version = "1.0~ynh2"
 
 maintainers = ["rdarocha"]
 

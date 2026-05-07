@@ -26,7 +26,7 @@ jobs:
         run: pip install -r backend/requirements.txt
 
       - name: Check syntax
-        run: python -m py_compile backend/main.py
+        run: python -m compileall -q backend
 
       - name: Smoke test (import)
         run: |

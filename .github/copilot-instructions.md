@@ -13,7 +13,10 @@ Self-hosted workout tracker. **FastAPI + SQLite** backend, **vanilla HTML/CSS/JS
 
 ```
 backend/
-  main.py          # All FastAPI routes + DB init (single file)
+  main.py          # App factory, middleware, static mount
+  database.py       # db(), init_db → migrations runner
+  routers/         # sessions, logs, exercises, tags, config
+  migrations/      # runner + versions/*.sql
   requirements.txt
 frontend/
   index.html       # Session list + session detail modal
@@ -42,7 +45,7 @@ All endpoints require `X-API-Key` header (except `/config`).
 | Method | Path | Body | Notes |
 |--------|------|------|-------|
 | GET | `/config` | — | Returns `{"api_key":"…"}`, no auth |
-| GET | `/api/sessions` | — | `?tag=` filter supported |
+| GET | `/api/sessions` | — | `?tag=`, `?limit=`, `?offset=` — response `{data,total,limit,offset}` |
 | POST | `/api/sessions` | `{date, notes, tags[]}` | Returns `{id}` |
 | PATCH | `/api/sessions/{id}` | `{date, notes, tags[]}` | |
 | DELETE | `/api/sessions/{id}` | — | Cascades to logs |
@@ -52,7 +55,7 @@ All endpoints require `X-API-Key` header (except `/config`).
 | GET | `/api/tags` | — | All distinct tags |
 | GET | `/api/exercises` | — | All names, sorted |
 | GET | `/api/exercises/frequent` | — | Top 5 most used |
-| GET | `/api/progress/{exercise}` | — | All sets across sessions |
+| GET | `/api/progress/{exercise}` | — | `?limit=`, `?offset=` — response `{data,total,limit,offset}` |
 
 ## Critical gotchas — always keep in mind
 
@@ -93,10 +96,10 @@ scp frontend/js/app.js frontend/js/calendar.js frontend/js/progress.js \
     remi@remidarocha.fr:/home/remi/muscu-app/frontend/js/
 scp frontend/css/style.css remi@remidarocha.fr:/home/remi/muscu-app/frontend/css/
 
-# Backend
-scp backend/main.py remi@remidarocha.fr:/home/remi/muscu-app/backend/main.py
+# Backend (exclude local DB and venv)
+rsync -avz --exclude='muscu.db' --exclude='venv' --exclude='__pycache__' \
+    backend/ remi@remidarocha.fr:/home/remi/muscu-app/backend/
 ssh remi@remidarocha.fr "sudo systemctl restart muscu"
-```
 
 ## Production paths
 
